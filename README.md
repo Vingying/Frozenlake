@@ -87,7 +87,7 @@ def get_policy(value, gamma=1.0):
 env = gym.make('FrozenLake-v1', desc=None, map_name='4x4', is_slippery=True)  # 获得环境
 ```
 
-![image-20220427212456314](C:\Users\Jingwei Yi\AppData\Roaming\Typora\typora-user-images\image-20220427212456314.png)
+![frozen_lake.gif](https://www.gymlibrary.ml/_images/frozen_lake.gif)
 
 其中 ```is_slippery``` 表示该地图是否有打滑现象。
 
