@@ -1,57 +1,38 @@
-from contextlib import closing
-from io import StringIO
-from os import path
-from typing import Optional
+import os
+import time
 
+import gym
 import numpy as np
 
-from gym import Env, spaces, utils
+env = gym.make('FrozenLake-v1', desc=None, map_name='4x4', is_slippery=False)
+n_observation = env.observation_space.n
+n_action = env.action_space.n
 
 
-# from gym.envs.toy_text.utils import categorical_sample
+def value_iteration(env, gamma=1.0):
+    ITERATION_COUNT = 1000
+    EPS = 1e-18
+    value = np.zeros(n_observation)
+    for step in range(ITERATION_COUNT):
+        next_value = np.copy(value)
+        for now_state in range(n_observation):
+            q_value = []
+            for now_action in range(n_action):
+                next_reward = []
+                for state_probability, next_state, reward, terminated in env.P[now_state][now_action]:
+                    next_reward.append(state_probability * (reward + gamma * next_value[next_state]))
+                q_value.append(np.sum(next_reward))
+                value[now_state] = max(q_value)
+        if np.linalg.norm(next_value - value, ord=None) <= EPS:
+            value = np.copy(next_value)
+            break
+        value = np.copy(next_value)
+    return value
 
 
-def random_generate_map(size=8, probability=0.7):
-    valid = False
-
-    def search_path(res, sx, sy, gx, gy):
-        queue, visited = [], set()
-        queue.append([sx, sy])
-        directions = [[0, 1], [1, 0], [-1, 0], [0, -1]]
-        while queue:
-            ux, uy = queue.pop()
-            if (ux, uy) in visited:
-                continue
-            visited.add((ux, uy))
-            for [dx, dy] in directions:
-                next_x, next_y = dx + ux, dy + uy
-                if min(next_x, next_y) < 0 or max(next_x, next_y) >= size:
-                    continue
-                if res[next_x][next_y] == 'H' or (next_x, next_y) in visited:
-                    continue
-                if [next_x, next_y] == [gx, gy]:
-                    return True
-                queue.append([next_x, next_y])
-        return False
-
-    while not valid:
-        probability = min(probability, 1 - probability)
-        res = np.random.choice(['F', 'H'], (size, size), p=[probability, 1 - probability])
-        sx, sy = np.random.randint(0, size), np.random.randint(0, size)
-        gx, gy = np.random.randint(0, size), np.random.randint(0, size)
-        while abs(sx - gx) + abs(sy - gy) < size:
-            gx, gy = np.random.randint(0, size), np.random.randint(0, size)
-        res[sx][sy], res[gx][gy] = 'S', 'G'
-        valid = search_path(res, sx, sy, gx, gy)
-    return ["".join(x) for x in res]
+def extract_policy(env, gamma=1.0):
 
 
-class solution:
+value_iteration(env)
 
-    def __init__(self, size=8):
-        env_map = random_generate_map(size)
-        for i in env_map:
-            print(i)
-
-
-c = solution()
+env.close()
